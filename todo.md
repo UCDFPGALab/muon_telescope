@@ -13,7 +13,7 @@ Separate code into individual easy-to-work-with files
     add a thorough readme to each file
 
 Run constant blinking at:
-    10ms (done)
+    1s (done)
     something much longer (10seconds?) so as to clearly see where the lag is
 
 Put slide together for next crayfis meeting
