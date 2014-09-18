@@ -14,15 +14,36 @@ TOTAL EVENTS: 535
 SCINT/PHONE EVENT RATIO: 91.0 
 ```
 
-# histogram.py
+# Taking data
+
+## Taking scintillator data with arduino
+
+  1) Check to see if the arduino is seeing hits (the device location may differ):
+`$ python arduinoLogTime.py /dev/ttyACM0` You should get a "starting!" and then a series of timestamps continually outputted. 
+
+  2) Run `$ python arduinoLogTime.py /dev/ttyACM0 >> runDir/arduino.txt &` which pipes the output to a text file in the background. This code must be running for the entire run.
+
+## Taking phone data
+
+  1) Run `$ sudo su brandon` and ~~steal his wife, kids, and fortune~~ run `$ /storage/crayfis/dataMerge.sh` to update the local storage from the crayfis server. Then `exit` back to youraccount.
+
+  2) Look in /storage/crayfis/txtData/year.month/day/ for the uploaded data packets. The format is yourPhoneID_yourRunID_timeOfUpload.txt. Copy the runID you want.
+
+  3) Copy /storage/crayfis/runID/yourRunID/yourRunID.combined to the run folder with the arduino.txt
+
+  4) Run `$ python brandon_code/main.py runDir/yourRunID.combined` and check that it outputs a stream of timestamps. Then run `$ python brandon_code/main.py runDir/yourRunID.combined >> runDir/phone.txt` to write them to a text file.
+
+# Data analysis
+
+## histogram.py
 
 Finds the closest scintillator timestamp to each phone timestamp, and creates a list of the differences. Makes a histogram showing the spread of the deltas.
 
-# largeHistogram.py
+## largeHistogram.py
 
 Same as above, but includes not only the smallest delta ts but all of them.
 
-# sumOffsets.py
+## sumOffsets.py
 
 Takes the delta ts from whatever mode you are working in, then sums them together. This is recalculated for different timestamp offsets. Produces a plot of sums over offsets.
 
@@ -31,10 +52,18 @@ Works in three modes:
   2. Sums all delta ts  
   3. Sums the smallest delta ts, but only if they are under the tolerance specified  
 
-# countOffsets.py
+## countOffsets.py
 
 First calculates the smallest delta t for each phone timestamp, then tallies up how many of them are under the desired tolerance. This is calculated for timestamp offsets. Produces a plot of counts over offsets.
 
-# correlation.py
+## correlation.py
 
 Working on it...
+
+
+
+
+
+ To get graphs, run script as follows:
+ $ python compareTimes.py -p runDir/phoneFile.txt -a runDir/arduinoFile.txt -d runDir
+ graphs are saved under runDir/histograms/ and runDir/sums/
