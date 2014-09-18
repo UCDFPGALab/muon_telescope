@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab as pl
 import math
+import os
 
 ##############################################
 ## PUTS TEXT FILES FROM OPTIONS INTO ARRAYS ##
@@ -18,25 +19,27 @@ def testFunc(): # Just to play around with the code without changing anything im
 
 def parseFileNames():
 
-    # how to parse the command line options
+    print("parsing filenames...")
+    
+    # parse the command line options
     parser = OptionParser()
     parser.add_option("-p", "--phone", action="store", type="string", dest="phonef", help="location of file containing phone timestamps", metavar="FILE")
     parser.add_option("-a", "--arduino", action="store", type="string", dest="arduinof", help="location of file containing arduino timestamps", metavar="FILE")
     parser.add_option("-d", "--directory", action="store", type="string", dest="savedir", help="directory in which to save graphs", metavar="DIR")
 
-    # stores the command line options as variables
+    # store the command line options as variables
     (options, args) = parser.parse_args()
     phoneFile = options.phonef
     arduinoFile = options.arduinof
     saveDirectory = options.savedir
-    #print ("finished parseFileNames")
+
     return phoneFile, arduinoFile, saveDirectory
 
 def textToArray(phoneFile, arduinoFile): # New return variable added- counts duplicate timestamps
 
     print("converting text files to arrays...")
 
-    # numpy arrays will print in their entirety with no ellipses
+    # numpy arrays will print in their entirety with no ellipses, use when debugging if convenient
     #np.set_printoptions(threshold=np.nan)
 
     # stick each line from the text file in an array, stripping newlines
@@ -46,12 +49,6 @@ def textToArray(phoneFile, arduinoFile): # New return variable added- counts dup
     file = open(arduinoFile)
     arduinoTimes = [line.strip('\n') for line in file.readlines()]
     file.close()
-   
-    # convert strings to ints 
-    x = np.array(phoneTimes)
-    phoneTimes = x.astype(np.int)
-    y = np.array(arduinoTimes)
-    arduinoTimes = y.astype(np.int)
     
     # remove first value from arduino array, contains the text "starting!"
     arduinoTimes = np.delete(arduinoTimes, 0)
@@ -59,7 +56,13 @@ def textToArray(phoneFile, arduinoFile): # New return variable added- counts dup
     # remove last value from arduino array
     # do this because the script can cut off mid-number when the run ends
     arduinoTimes = np.delete(arduinoTimes, (len(arduinoTimes) - 1))
-
+    
+    # convert strings to ints 
+    x = np.array(phoneTimes)
+    phoneTimes = x.astype(np.int)
+    y = np.array(arduinoTimes)
+    arduinoTimes = y.astype(np.int)
+    
     # make sure timestamps are sorted unique with no duplicates
     phoneTimes = np.sort(phoneTimes)
     phoneLength = len(phoneTimes)
@@ -76,24 +79,28 @@ def textToArray(phoneFile, arduinoFile): # New return variable added- counts dup
    
     # truncate beginning of runs to match each other
     startDiscrepency = phoneTimes[0] - arduinoTimes[0]
-    location = "nowhere"
+    location = " nowhere"
     while True:
+        # see how far apart the beginning of each run is
         startDifference = phoneTimes[0] - arduinoTimes[0]
+        # cut whichever one is longer so they match
         if startDifference <- maxDifference:
             phoneTimes = np.delete(phoneTimes, 0)
-            location = " phone"
+            location = " phone data"
         elif startDifference > maxDifference:
             arduinoTimes = np.delete(arduinoTimes, 0)
-            location = " arduino"
+            location = " arduino data"
         elif (math.fabs(startDifference)) <= maxDifference:
-            print("    cut "+str(int(math.fabs((startDiscrepency - startDifference)/60000)))+" excess minutes from beginning of"+location+" data!")
+            print("    cut "+str(int(math.fabs((startDiscrepency - startDifference)/60000)))+" excess minutes from beginning of"+location+"!")
             break
     
     # truncate end of runs to match each other
     endDiscrepency = phoneTimes[-1] - arduinoTimes[-1]
     location = " nowhere"
     while True:
+        # see how far apart the end of each run is
         endDifference = phoneTimes[-1] - arduinoTimes[-1]
+        # cut whichever one is longer so they match
         if endDifference > maxDifference:
             phoneTimes = np.delete(phoneTimes, -1)
             location = " phone data"
@@ -110,6 +117,20 @@ def textToArray(phoneFile, arduinoFile): # New return variable added- counts dup
 ## SINGLE OFFSET HISTOGRAM ##
 #############################
 
+def smallestDelta(phoneTimes, arduinoTimes, offset):
+    
+    deltaTimes = []
+
+    for i in xrange(len(phoneTimes)):
+    
+        # index of the smallest difference between index i of phone timestamps and ALL of arduino timestamps
+        index = np.argmin(np.abs(phoneTimes[i] + offset - arduinoTimes))
+        # plugs index in to find actual value of that smallest difference
+        smallestMatch = (phoneTimes[i] + offset - arduinoTimes[index])
+        deltaTimes.append(smallestMatch)
+        
+    return deltaTimes
+
 def drawHistogram(deltaTimes, offset, numberOfBins, leftRange, rightRange, saveDirectory):
       
     plt.figure(figsize=(16,6))
@@ -117,8 +138,20 @@ def drawHistogram(deltaTimes, offset, numberOfBins, leftRange, rightRange, saveD
     plt.title("Smallest Differences in Phone vs. Scintillator Timestamps with "+str(offset)+"ms Timestamp Shift")
     plt.xlabel(r'$\Delta$' "time in ms")
     plt.ylabel("Number of Hits")
+
+    # create save directory if it does not exist
+    if not os.path.exists(saveDirectory+"histograms/"):
+        os.makedirs(saveDirectory+"histograms/")
+
+    # specify file naming
     fileName = str(offset)+"msOffset_"+str(leftRange)+"to"+str(rightRange)+".png"
-    plt.savefig(saveDirectory+"/histograms/"+fileName, bbox_inches='tight')
+    saveLocation = saveDirectory+"histograms/"+fileName
+
+    # save the graph
+    plt.savefig(saveLocation, bbox_inches='tight')
+    print("saved graph at "+saveLocation)
+    
+    # show the graph in a popup
     plt.show()
 
 ##########
@@ -203,7 +236,7 @@ def cutDeltasForSums(phoneTimes, arduinoTimes, offset, tolerance):
 
 def drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory, tolerance, normalization):
 
-    # more points --> smaller dots
+    # more points --> smaller dots on graph
     if numberOfPoints <= 100:
         markerSize = 4
     else:
@@ -241,6 +274,7 @@ def drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory,
     
     # naming with value cut, range, offset increment, etc
     fileName = str(str(offsetValues[0])+"To"+str(offsetValues[len(offsetValues) - 1])+"OffsetIncrement"+str(offsetIncrement)+".png")
+    
     # label with thresholding info only if they are enabled
     if tolerance == "smallest":
         plotTitle = plotTitle+" (smallest |"+r'$\Delta$'+"t| kept)" 
@@ -254,7 +288,8 @@ def drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory,
         if normalization == True:
             plotTitle = plotTitle+" (normalized by number of elements)" 
             fileName = "normalized_"+fileName
-
+    
+    # plot and axis labelling
     plt.title(plotTitle)
     plt.xlabel("Scintillator Time Shift in ms")
     plt.ylabel(r'$\Sigma$'+"|"+r'$\Delta$'+"t |")
@@ -266,13 +301,17 @@ def drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory,
     # tweak spacing
     plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.23)
 
+    # make save directory if it doesn't exist
+    if not os.path.exists(saveDirectory+"sums/"):
+        os.makedirs(saveDirectory+"sums/")
+    
     # save the graph
     saveLocation = saveDirectory+"sums/"+fileName
     plt.savefig(saveLocation, bbox_inches='tight')
     print("saved graph at "+saveLocation)
 
     # show the graph
-    #plt.show()
+    plt.show()
 
 #####################
 ## GIANT HISTOGRAM ##
@@ -314,9 +353,16 @@ def drawGiantHistogram(deltaTimes, numberOfBins, leftRange, rightRange, saveDire
     
     # tweak spacing
     plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.21)
-    
+   
+    # specify file naming and save location
     fileName = str(leftRange)+"to"+str(rightRange)+"_"+str(numberOfBins)+"bins"+".png"
     saveLocation = saveDirectory+"/giantHistograms/"+fileName
+
+    # make save directory if it doesn't exist
+    if not os.path.exists(saveDirectory+"giantHistograms/"):
+        os.makedirs(saveDirectory+"giantHistograms/")
+
+    # save the image
     plt.savefig(saveLocation, bbox_inches='tight')
     
     print("saved figure at", (saveLocation))
@@ -345,6 +391,7 @@ def countDeltas(phoneTimes, arduinoTimes, leftRange, rightRange, offsetIncrement
 
     for i in xrange(numberOfPoints):
         
+        # get list of timestamp differences
         deltaTimes = []    
         deltaTimes = cutDeltasForCounts(phoneTimes, arduinoTimes, offset, tolerance)
 
@@ -381,7 +428,7 @@ def cutDeltasForCounts(phoneTimes, arduinoTimes, offset, tolerance):
 
 def drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrement, tolerance):
 
-    # more points --> smaller dots
+    # more points --> smaller dots on graph
     if numberOfPoints <= 100:
         markerSize = 4
     else:
@@ -398,8 +445,7 @@ def drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrem
     y = counts
     labels = offsetValues
     
-    # tweak sizing
-    # more points = wider graph
+    # tweak sizing: more points --> wider graph
     if numberOfPoints > 1000:
         figureSize = (28,6)
     elif 1000 >= numberOfPoints > 100:
@@ -427,14 +473,20 @@ def drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrem
     # tweak spacing
     plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.23)
 
-    # save the graph
+    # file naming shenanigans
     fileName = str("tolerance"+str(tolerance)+"ms"+str(offsetValues[0])+"To"+str(offsetValues[len(offsetValues) - 1])+"OffsetIncrement"+str(offsetIncrement)+".png")
     saveLocation = saveDirectory+"counts/"+fileName
+   
+    # make save directory if it doesn't exist
+    if not os.path.exists(saveDirectory+"counts/"):
+        os.makedirs(saveDirectory+"counts/")
+
+    # save the graph
     plt.savefig(saveLocation, bbox_inches='tight')
     print("saving plot to", saveLocation)
     
     # show the graph
-    #plt.show()
+    plt.show()
 
 ##############################
 ## CHASE'S CORRELATION CODE ##
@@ -443,23 +495,22 @@ def drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrem
 HOUR = 3600000
 DAY = 86400000
 
-'''
-Generate a simulated discrete timestream for the phone and scintillator data.
+    # Generate a simulated discrete timestream for the phone and scintillator data.
+    #
+    # Arguments:
+    #   interval    -- the amount of time to sample (milliseconds)
+    #   resolution  -- the sampling resolution (milliseconds)
+    #   rate_phone  -- the rate of (real) muon hits in the phone (mHz)
+    #   rate_scint  -- the rate of (real and/or noise) hits on the scintillator (mHz)
+    #   phone_noise -- the noise factor for the phone. E.g. phone_nose=2 means add extra
+    #                 noise to the phone timestream at twice the "real" hit rate.
+    #
+    # Returns:
+    #   (ph_data, sc_data, shift)
+    #   ph_data -- the phone timestream data
+    #   sc_data -- the scintillator timestream data
+    #   shift   -- the offset shift (in bins) of the true correlated hit events
 
-Arguments:
-  interval    -- the amount of time to sample (milliseconds)
-  resolution  -- the sampling resolution (milliseconds)
-  rate_phone  -- the rate of (real) muon hits in the phone (mHz)
-  rate_scint  -- the rate of (real and/or noise) hits on the scintillator (mHz)
-  phone_noise -- the noise factor for the phone. E.g. phone_nose=2 means add extra
-                 noise to the phone timestream at twice the "real" hit rate.
-
-Returns:
-  (ph_data, sc_data, shift)
-  ph_data -- the phone timestream data
-  sc_data -- the scintillator timestream data
-  shift   -- the offset shift (in bins) of the true correlated hit events
-'''
 
 def gen_events(interval, resolution, rate_phone, rate_scint, phone_noise=5):
 
@@ -489,17 +540,17 @@ def gen_events(interval, resolution, rate_phone, rate_scint, phone_noise=5):
     # finally, return the two timestreams, and the true shift
     return data_ph, data_sc, n_shift
 
-'''
-Turn a list of timestamps into a discrete timestream
 
-Arguments:
-  timestamps -- a list of the event timestamps (in milliseconds)
-  resolution -- the timing resolution (milliseconds)
+    # Turn a list of timestamps into a discrete timestream
+    #
+    # Arguments:
+    #   timestamps -- a list of the event timestamps (in milliseconds)
+    #   resolution -- the timing resolution (milliseconds)
+    #
+    # Returns:
+    #   a list of numbers corresponding to the number of events in
+    #   each timestep
 
-Returns:
-  a list of numbers corresponding to the number of events in
-  each timestep
-'''
 
 def make_timestream(timestamps, resolution):
     start = np.min(timestamps)
@@ -516,19 +567,18 @@ def make_timestream(timestamps, resolution):
     timestream, _ = np.histogram(timestamps, bins=nbins)
     return timestream
 
-'''
-Truncate a portion of the phone timestream on each end, then compute the correlation
-function to look for the maximal correlation as a function fo time shift.
-Note that the longer the sample timestreams and the wider the scanning window, the
-more computationally expensive this becomes.
 
-Arguments:
-  data_phone -- the phone data timestream
-  data_scint -- the scintillator data timestream
-  resolution -- the sampling resolution of the timestreams
-  width      -- the width of the window over which to scan the time shift (seconds)
-  plot       -- plot the correlation function
-'''
+    # Truncate a portion of the phone timestream on each end, then compute the correlation
+    # function to look for the maximal correlation as a function fo time shift.
+    # Note that the longer the sample timestreams and the wider the scanning window, the
+    # more computationally expensive this becomes.
+    #
+    # Arguments:
+    #   data_phone -- the phone data timestream
+    #   data_scint -- the scintillator data timestream
+    #   resolution -- the sampling resolution of the timestreams
+    #   width      -- the width of the window over which to scan the time shift (seconds)
+    #   plot       -- plot the correlation function
 
 def find_shift(saveDirectory, data_phone, data_scint, resolution, width=None, plot=False):
 
@@ -554,6 +604,11 @@ def find_shift(saveDirectory, data_phone, data_scint, resolution, width=None, pl
     times = (shift_width - np.arange(corr.size)) * resolution
 
     if plot:
+        # make save directory if it doesn't exist
+        if not os.path.exists(saveDirectory+"correlation/"):
+            os.makedirs(saveDirectory+"correlation/")
+
+
         plt.figure(figsize=(16,6))
         plt.plot(times, corr)
         plt.savefig(str(saveDirectory)+"correlation/correlation_resolution"+str(resolution)+"ms_width"+str(width)+".png")
@@ -571,11 +626,15 @@ def find_shift(saveDirectory, data_phone, data_scint, resolution, width=None, pl
 def printRunInfo():
        
     # no parameters for this function
-
+    
+    # parse names of files
     phoneFile, arduinoFile, saveDirectory = parseFileNames()
+    
+    # convert data in files to arrays
     phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
         
     # ARDUINO RUN TIME
+
     # find difference between start and end time, convert form millis to days
     runTimeArduino = ((float(arduinoTimes[len(arduinoTimes) - 1]) - float(arduinoTimes[0]))/(1000*60*60*24))
     # convert from millis epoch to seconds epoch, then to readable format 
@@ -585,6 +644,7 @@ def printRunInfo():
     readableRunEndArduino = time.strftime('%Y-%m-%d %I:%M %p', time.localtime(runEndArduino))
 
     # PHONE RUN TIME
+
     # find difference between start and end time, convert form millis to days
     runTimePhone = ((float(phoneTimes[len(phoneTimes) - 1]) - float(phoneTimes[0]))/(1000*60*60*24))
     # convert from millis epoch to seconds epoch, then to readable format 
@@ -608,19 +668,23 @@ def printRunInfo():
 def runOffsetHistogram():
     
     # parameters
-    offset = -310850 
-    numberOfBins = 100
-    leftRange = -2000
-    rightRange = 2000
+    offset = -129000 
+    numberOfBins = 200
+    leftRange = -15000
+    rightRange = 15000
         
-    print("going to make a histogram of smallest timestamp differences at offset", offset, "!")
+    print("going to make a histogram of smallest timestamp differences at offset"+str(offset)+"ms...")
 
-    # these functions is not useful for the histogram, do not change
-    tolerance = 0
+    # parse names of files
     phoneFile, arduinoFile, saveDirectory = parseFileNames()
+    
+    # convert data in files to arrays
     phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
-    dTimes = smallestDelta(phoneTimes, arduinoTimes, offset, tolerance)
+    
+    # find the closest timestamp to each phone timestamp (at whatever offset you want)
+    dTimes = smallestDelta(phoneTimes, arduinoTimes, offset)
 
+    # plot a histogram of the delta times
     drawHistogram(dTimes, offset, numberOfBins, leftRange, rightRange, saveDirectory)
 
 def runSums():
@@ -628,29 +692,39 @@ def runSums():
     print("going to make a graph of sums across offsets...")
 
     # parameters
-    leftRange =      -3000
-    rightRange =      3000
-    offsetIncrement = 1
+    leftRange =      -1000
+    rightRange =      1000
+    offsetIncrement = 20
     # "smallest", "all", and integers are accepted
-    tolerance = 210
+    tolerance = 150
     normalization = True
         
-    for i in xrange(100): 
-        if (tolerance == "all") or (tolerance == "smallest"):
-            normalization = False
-        startTime = time.time()
-        phoneFile, arduinoFile, saveDirectory = parseFileNames()
-        phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
-        offsetValues, sums, numberOfPoints = findSyncWithSums(phoneTimes, arduinoTimes, leftRange, rightRange, offsetIncrement, tolerance, normalization)
-            
-        # print total time
-        endTime = time.time()
-        timeItTook = endTime - startTime
-        print ("finished in", round((timeItTook/60),2), "minutes")
-            
-        drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory, tolerance, normalization)
+    # uncomment if you want to produce lots of graphs
+    #for i in xrange(100): 
+
+    if (tolerance == "all") or (tolerance == "smallest"):
+        normalization = False
+    startTime = time.time()
+    
+    # parse names of files
+    phoneFile, arduinoFile, saveDirectory = parseFileNames()
+    
+    # convert data in files to arrays
+    phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
+
+    # find the chosen set of deltaTimes (based on parameters) and sum them up
+    offsetValues, sums, numberOfPoints = findSyncWithSums(phoneTimes, arduinoTimes, leftRange, rightRange, offsetIncrement, tolerance, normalization)
         
-        tolerance += 10
+    # print total time
+    endTime = time.time()
+    timeItTook = endTime - startTime
+    print ("finished in", round((timeItTook/60),2), "minutes")
+    
+    # plot the sums over millisecond offset
+    drawSums(offsetValues, sums, numberOfPoints, offsetIncrement, saveDirectory, tolerance, normalization)
+    
+    # also uncomment for lots of graphs
+    #   tolerance += 10
 
 def runGiantHistogram():
     
@@ -662,7 +736,10 @@ def runGiantHistogram():
     rightRange = 2000
     #rightRange = leftRange+increment
         
+    # parse names of files
     phoneFile, arduinoFile, saveDirectory = parseFileNames()
+ 
+    # convert data in files to arrays
     phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
     dTimes = findAllDeltas(phoneTimes, arduinoTimes)
    
@@ -673,34 +750,47 @@ def runGiantHistogram():
     #    leftRange += increment
     #    rightRange += increment
     
+    # find EVERY combo of timestamp differences and plot a histogram
     drawGiantHistogram(dTimes, numberOfBins, leftRange, rightRange, saveDirectory)
 
 def runCountDeltas():
     
     # parameters
-    leftRange = -3000
-    rightRange = 3000
-    offsetIncrement = 1
+    leftRange = -300000
+    rightRange = 300000
+    offsetIncrement = 3000
     # give a maximum ms value to include
-    tolerance = 0
+    tolerance = 1000
     
-    for i in xrange(100):
-        startTime = time.time()
-        phoneFile, arduinoFile, saveDirectory = parseFileNames()
-        phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
-            
-        offsetValues, counts, numberOfPoints = countDeltas(phoneTimes, arduinoTimes, leftRange, rightRange, offsetIncrement, tolerance)
-            
-        drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrement, tolerance)
+    # uncomment for making lots of graphs
+    #for i in xrange(100):
 
-        # print total time
-        endTime = time.time()
-        timeItTook = endTime - startTime
-        print ("finished in", round((timeItTook/60),2), "minutes")
-        tolerance += 10
+    startTime = time.time()
+    
+    # parse names of files
+    phoneFile, arduinoFile, saveDirectory = parseFileNames()
+    
+    # convert data in files to arrays
+    phoneTimes, arduinoTimes, phoneDupes = textToArray(phoneFile, arduinoFile)
+        
+    # find how many of the phone timestamps have an arduino timestamp within the tolerance range
+    offsetValues, counts, numberOfPoints = countDeltas(phoneTimes, arduinoTimes, leftRange, rightRange, offsetIncrement, tolerance)
+    
+    # plot each number above over the offset in milliseconds
+    drawCounts(offsetValues, counts, numberOfPoints, saveDirectory, offsetIncrement, tolerance)
+
+    # print total time
+    endTime = time.time()
+    timeItTook = endTime - startTime
+    print ("finished in", round((timeItTook/60),2), "minutes")
+    
+    # uncomment for mass graphing
+    #   tolerance += 10
 
 def runCorrelation():
-  
+
+    # your guess is as good as mine as to what this does. Refer to corr.py to look at the unadulterated code
+
     #interval   = 1.*DAY # millisec
     resolution = 100.   # millisec
 
@@ -756,14 +846,6 @@ if __name__ == "__main__":
     #runCountDeltas()
     
     # run the timestamps through Chase's correlation code
-    # runCorrelation()
+    runCorrelation()
 
-    testFunc()
-
-##########
-## TODO ##
-##########
-
-# print the offset values of the local minimums -- no guesswork
-
-# support putting multiple runs together?
+    #testFunc()
