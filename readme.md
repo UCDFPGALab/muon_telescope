@@ -31,7 +31,7 @@ Works in three modes:
   2. Sums all delta ts  
   3. Sums the smallest delta ts, but only if they are under the tolerance specified  
 
-# counts.py
+# countOffsets.py
 
 First calculates the smallest delta t for each phone timestamp, then tallies up how many of them are under the desired tolerance. This is calculated for timestamp offsets. Produces a plot of counts over offsets.
 
