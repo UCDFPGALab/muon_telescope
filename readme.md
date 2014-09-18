@@ -27,9 +27,9 @@ Same as above, but includes not only the smallest delta ts but all of them.
 Takes the delta ts from whatever mode you are working in, then sums them together. This is recalculated for different timestamp offsets. Produces a plot of sums over offsets.
 
 Works in three modes:
-1. Sums the smallest delta ts
-2. Sums all delta ts
-3. Sums the smallest delta ts, but only if they are under the tolerance specified
+1. Sums the smallest delta ts  
+2. Sums all delta ts  
+3. Sums the smallest delta ts, but only if they are under the tolerance specified  
 
 # counts.py
 
