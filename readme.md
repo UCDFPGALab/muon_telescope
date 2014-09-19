@@ -59,11 +59,3 @@ First calculates the smallest delta t for each phone timestamp, then tallies up 
 ### correlation.py
 
 Working on it...
-
-
-
-
-
- To get graphs, run script as follows:
- $ python compareTimes.py -p runDir/phoneFile.txt -a runDir/arduinoFile.txt -d runDir
- graphs are saved under runDir/histograms/ and runDir/sums/
