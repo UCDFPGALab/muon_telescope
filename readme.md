@@ -19,9 +19,9 @@ SCINT/PHONE EVENT RATIO: 91.0
 ### Taking scintillator data with arduino
 
   1) Check to see if the arduino is seeing hits (the device location may differ):
-`$ python arduinoLogTime.py /dev/ttyACM0` You should get a "starting!" and then a series of timestamps continually outputted. 
+`$ python arduinoLogTime.py /dev/ttyACM0 -o "Output file name"` You should get a "starting!" 
 
-  2) Run `$ python arduinoLogTime.py /dev/ttyACM0 >> runDir/arduino.txt &` which pipes the output to a text file in the background. This code must be running for the entire run.
+  2) Run `$ nohup python arduinoLogTime.py /dev/ttyACM0 -o "Output file name" &` which pipes the output to a text file in the background. This code must be running for the entire run. `nohup` keeps the program running even if the shell is closed for whatever reason, unlike the ampersand alone.
 
 ### Taking phone data
 
