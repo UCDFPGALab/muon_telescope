@@ -56,7 +56,11 @@ while ser.isOpen():
     if val.rstrip() == "starting":
         startTime = int(round(time.time() * 1000))
         started = True
-        print("started!")
+        print("started!") 
+        fil = open(outputname,"a")
+        fil.write("started!")
+        fil.write("\n")
+        fil.close()
             
     # arduino prints out millis since started, which is tacked onto the start time
     if (started == True) and (val.rstrip() != "starting"):
