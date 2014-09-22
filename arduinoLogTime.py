@@ -15,6 +15,7 @@ ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 parser = OptionParser()
 parser.add_option("-c", "--count", action="store_true", dest="countFlag")
 parser.add_option("-t", "--timer", action="store", type="float", default="0", dest="runTimeLength")
+parser.add_option("-o", "--output", action="store", dest="outputname", default="youforgottonamethis.txt")
 
 # false by default, the parser will set them to true if flags are used
 counterOn = False
@@ -25,6 +26,7 @@ runTimeLength = 0.0
 (options, args) = parser.parse_args()
 counterOn = options.countFlag
 runTimeLength = options.runTimeLength
+outputname = options.outputname
 if runTimeLength!=0:
     timerOn = True 
 
@@ -59,7 +61,10 @@ while ser.isOpen():
     # arduino prints out millis since started, which is tacked onto the start time
     if (started == True) and (val.rstrip() != "starting"):
         eventTime = startTime + int(val)
-        print eventTime
+        fil = open(outputname,"a")
+        fil.write(str(eventTime))
+        fil.write("\n")
+        fil.close()
 
         # increment the timer
         count = count + 1
