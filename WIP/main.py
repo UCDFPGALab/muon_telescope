@@ -10,6 +10,8 @@ from plots import *
 #Begin side functions#
 #********************#
 
+led_run = 0 # Set this to anything besides zero, and the program will output only the timestamps of LED pixels
+
 def times(time):
   times = []
   curtime = time[0]
@@ -20,7 +22,7 @@ def times(time):
     times.append(curtime)
     curtime = time[i]
   #Returns an array of time for each frame
-  #1 entery corresponds to one frame
+  #1 entry corresponds to one frame
   return times
 
 def pix_per_frame(time):
@@ -272,7 +274,7 @@ def get_run_length(xbTime):
       tot+=xbTime[i]
   return tot
 
-def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp):
+def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp,LED=0):
   #Get number of frames
   count=0
   for i in xrange(len(x)):
@@ -303,8 +305,13 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
   ind_to_rem = []
   #Loop through and get indecies for hot pix
   for i in xrange(len(x)):
-    if float(frame[int(x[i])-1][int(y[i])-1]) >= float(10*avg_hit):
-      ind_to_rem.append(i)
+    if LED == 0:
+        if float(frame[int(x[i])-1][int(y[i])-1]) >= float(10*avg_hit):
+            ind_to_rem.append(i)
+    else:
+        if float(frame[int(x[i])-1][int(y[i])-1]) < float(10*avg_hit):
+            ind_to_rem.append(i)
+
   #remove hot pixels
   pID 	= np.delete(pID, ind_to_rem)
   x 	= np.delete(x, ind_to_rem)
@@ -329,42 +336,6 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
   xdrp	= np.delete(xdrp, ind_to_rem)
 
   return pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp
-
-def identify_led_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp): #this identifies which pixels are being hit by the light from the LED when the scintillator is triggered. (Though it will also return true "hot pixels")
-  #Get number of frames
-  count=0
-  for i in xrange(len(x)):
-    if x[i] == 1:
-      count+=1
-  
-  #Say that if a pixel is hit 100x of the avg
-  #pix hit, it is a hot pixel
-  maxx = int(max(x))
-  maxy = int(max(y))
-  #Create a 2D array to store how many time each pix was hit
-  frame = [[0 for j in xrange(maxy)] for i in xrange(maxx)]
-  #Now loop through x and y and count # each pix is hit
-  for i in xrange(len(x)):
-    frame[int(x[i])-1][int(y[i])-1]+=1
-  
-  hit_tot = 0
-  #Find average number of pixel hits
-  for i in xrange(maxx):
-    for j in xrange(maxy):
-      hit_tot+=frame[i-1][j-1]
-  avg_hit = float(hit_tot)/float(maxx*maxy)
-  
-  #If it's a bad data set with low avg return unaltered arrays
-  #if avg_hit <= .10:
-  #  return pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp
-
-  ind_to_rem = []
-  #Loop through and get indicies for hot pix
-  for i in xrange(len(x)):
-    if float(frame[int(x[i])-1][int(y[i])-1]) >= float(100*avg_hit):
-      ind_to_rem.append(i)
-  
-  return ind_to_rem
 
 
 def get_run_ID(fn):
@@ -427,8 +398,8 @@ if __name__== "__main__":
   #xb_L1thr	= 18 #xb_L2thr	= 19 #xb_drpFms = 20
 
   #Get rid of hot pixels and respective data
-  #for i in xrange(len(hyl)):
-  #  hyl[i][0],hyl[i][1],hyl[i][2],hyl[i][3],hyl[i][4],hyl[i][5],hyl[i][6],hyl[i][7],hyl[i][8],hyl[i][9],hyl[i][10],hyl[i][11],hyl[i][12],hyl[i][13],hyl[i][14],hyl[i][15],hyl[i][16],hyl[i][17],hyl[i][18],hyl[i][19],hyl[i][20] = get_rid_of_hot_pixels(hyl[i][0],hyl[i][1],hyl[i][2],hyl[i][3],hyl[i][4],hyl[i][5],hyl[i][6],hyl[i][7],hyl[i][8],hyl[i][9],hyl[i][10],hyl[i][11],hyl[i][12],hyl[i][13],hyl[i][14],hyl[i][15],hyl[i][16],hyl[i][17],hyl[i][18],hyl[i][19],hyl[i][20])
+  for i in xrange(len(hyl)):
+    hyl[i][0],hyl[i][1],hyl[i][2],hyl[i][3],hyl[i][4],hyl[i][5],hyl[i][6],hyl[i][7],hyl[i][8],hyl[i][9],hyl[i][10],hyl[i][11],hyl[i][12],hyl[i][13],hyl[i][14],hyl[i][15],hyl[i][16],hyl[i][17],hyl[i][18],hyl[i][19],hyl[i][20] = get_rid_of_hot_pixels(hyl[i][0],hyl[i][1],hyl[i][2],hyl[i][3],hyl[i][4],hyl[i][5],hyl[i][6],hyl[i][7],hyl[i][8],hyl[i][9],hyl[i][10],hyl[i][11],hyl[i][12],hyl[i][13],hyl[i][14],hyl[i][15],hyl[i][16],hyl[i][17],hyl[i][18],hyl[i][19],hyl[i][20],led_run)
   
   hylem = []
   for i in xrange(len(hyl)):
@@ -493,4 +464,4 @@ if __name__== "__main__":
 
   for i in xrange(len(et)):
     print "\n".join('{0:.0f}'.format(z) for z in et[i])
-  print identify_LED_pixels(hyl[i][0],hyl[i][1],hyl[i][2],hyl[i][3],hyl[i][4],hyl[i][5],hyl[i][6],hyl[i][7],hyl[i][8],hyl[i][9],hyl[i][10],hyl[i][11],hyl[i][12],hyl[i][13],hyl[i][14],hyl[i][15],hyl[i][16],hyl[i][17],hyl[i][18],hyl[i][19],hyl[i][20])
+
