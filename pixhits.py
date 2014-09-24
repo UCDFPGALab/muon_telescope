@@ -286,7 +286,7 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
   maxx = int(max(x))
   maxy = int(max(y))
   #Create a 2D array to store how many time each pix was hit
-  frame = np.zeros((maxx,maxy),dtype=np.int_)
+  frame = np.zeros((maxx+1,maxy+1),dtype=np.int_)
   #Now loop through x and y and count # each pix is hit
   for i in xrange(len(x)):
     frame[int(x[i])-1][int(y[i])-1]+=1
