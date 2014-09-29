@@ -356,8 +356,8 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
           for j in xrange(maxy):
              hit_tot+=frame[i-1][j-1]
       avg_hit = float(hit_tot)/float(maxx*maxy)
-      if (avg_hit < .1):
-          avg_hit = .1
+      if (avg_hit < 1):
+          avg_hit = 1
       for i in xrange(len(x)):     
           if float(frame[int(x[i])-1][int(y[i])-1]) > float(10*avg_hit):
               ind_to_rem.append(i)
