@@ -10,9 +10,11 @@ from plots import *
 #Begin side functions#
 #********************#
 
-led_run = 1 # Set this to anything besides zero, and the program will output only the timestamps of LED pixels
-xedge = 100
-yedge = 100
+led_run = 0 # Set this to anything besides zero, and the program will output only the timestamps of LED pixels
+xinedge = 25
+yinedge = 16
+xoutedge = 100
+youtedge = 50
 
 
 def times(time):
@@ -308,11 +310,11 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
   ind_to_rem = []
   #Loop through and get indecies for hot pix
   for i in xrange(len(x)):
-    if LED == 0:
-        if (x[i] < xedge or y[i] < yedge):
+    if LED != 0:
+        if (x[i] > xinedge or y[i] > yinedge):
             ind_to_rem.append(i)
     else:
-        if (x[i] > xedge or y[i] > yedge):
+        if (x[i] < xoutedge and y[i] < youtedge):
             ind_to_rem.append(i)
         
   #remove hot pixels
@@ -337,7 +339,51 @@ def get_rid_of_hot_pixels(pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,
   xL1	= np.delete(xL1, ind_to_rem)
   xL2	= np.delete(xL2, ind_to_rem)
   xdrp	= np.delete(xdrp, ind_to_rem)
-
+  if LED == 0:
+      ind_to_rem=[]
+      #Say that if a pixel is hit 10x of the avg
+      #pix hit, it is a hot pixel
+      maxx = int(max(x))
+      maxy = int(max(y))
+      #Create a 2D array to store how many time each pix was hit
+      frame = [[0 for j in xrange(maxy)] for i in xrange(maxx)]
+      #Now loop through x and y and count # each pix is hit
+      for i in xrange(len(x)):
+         frame[int(x[i])-1][int(y[i])-1]+=1
+      hit_tot = 0
+      #Find average number of pixel hits
+      for i in xrange(maxx):
+          for j in xrange(maxy):
+             hit_tot+=frame[i-1][j-1]
+      avg_hit = float(hit_tot)/float(maxx*maxy)
+      if (avg_hit < .1):
+          avg_hit = .1
+      for i in xrange(len(x)):     
+          if float(frame[int(x[i])-1][int(y[i])-1]) > float(10*avg_hit):
+              ind_to_rem.append(i)
+          #remove hot pixels
+      pID 	= np.delete(pID, ind_to_rem)
+      x 	= np.delete(x, ind_to_rem)
+      y 	= np.delete(y, ind_to_rem)
+      pval 	= np.delete(pval, ind_to_rem)
+      pavg3 = np.delete(pavg3, ind_to_rem)
+      pavg5	= np.delete(pavg5, ind_to_rem)
+      pm 	= np.delete(pm, ind_to_rem)
+      eID 	= np.delete(eID, ind_to_rem)
+      etime = np.delete(etime, ind_to_rem)
+      elon 	= np.delete(elon, ind_to_rem)
+      elat 	= np.delete(elat, ind_to_rem)
+      epAvg	= np.delete(epAvg, ind_to_rem)
+      epStd = np.delete(epStd, ind_to_rem)
+      eorx	= np.delete(eorx, ind_to_rem)
+      eory	= np.delete(eory, ind_to_rem)
+      eorz	= np.delete(eorz, ind_to_rem)
+      xID	= np.delete(xID, ind_to_rem)
+      xtime	= np.delete(xtime, ind_to_rem)
+      xL1	= np.delete(xL1, ind_to_rem)
+      xL2	= np.delete(xL2, ind_to_rem)
+      xdrp	= np.delete(xdrp, ind_to_rem)
+      
   return pID,x,y,pval,pavg3,pavg5,pm,eID,etime,elon,elat,epAvg,epStd,eorx,eory,eorz,xID,xtime,xL1,xL2,xdrp
 
 
