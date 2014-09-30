@@ -59,3 +59,19 @@ First calculates the smallest delta t for each phone timestamp, then tallies up 
 ### correlation.py
 
 Working on it...
+
+### LED.sh
+
+This takes in the (runID).combined file and outputs a sorted list of timestamps for LED hits. The syntax for the command is:
+`$bash LED.sh -x 25 -y 25 -t 20 < runID.combined > LED.txt`
+Here -x and -y set the coordinates for which pixels are identified as LED pixels and -t sets how many of these pixels must be lit up at once to qualify as an LED hit. All parameters are required, and it is likely to fail spectacularly if you enter a non-integer, so avoid that if possible.
+
+### nonLED.sh
+
+This takes in the (runID).combined file and outputs a similar file (in the same format) with pixels outside the range of interest removed. The syntax for the command is:
+`$bash nonLED.sh -x 100 -y 100 < runID.combined > nonLED.combined`
+This has the effect of greatly decreasing the file size of the file that must be analyzed by min3.py.
+
+### min3.py
+
+Used like main.py to input data from nonLED.sh.
